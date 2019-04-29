@@ -82,7 +82,7 @@ function invLow() {
 
     // query the database for all items available to purchase and find items with low inventory
     connection.query("SELECT * FROM products WHERE stockQuantity <= 5", function (err, res) {
-        console.log(chalk.green.bold("\nAll products with 5 or less units still remaining.\n");
+        console.log(chalk.green.bold("\nAll products with 5 or less units still remaining.\n"));
         displayForManager(res);
         startManager();
     });
@@ -115,7 +115,7 @@ function invAdd() {
             }], function (err, res) { });
 
             connection.query('SELECT * FROM products WHERE ?', { ID: mgrAdd.Id }, function (err, res) {
-                console.log(chalk.green.bold('\n The Stock Quantity was updated and can be viewed in the Inventory\n');
+                console.log(chalk.green.bold('\n The Stock Quantity was updated and can be viewed in the Inventory\n'));
                 displayForManager(res);
                 startManager();
             });
@@ -158,7 +158,7 @@ function addItem() {
             price: mgrNew.Price,
             stockQuantity: mgrNew.Units
         }, function (err, res) { });
-        console.log(chalk.green.bold('\n  The new item has been added. \n');
+        console.log(chalk.green.bold('\n  The new item has been added. \n'));
         connection.query('SELECT * FROM products', function (err, results) {
             displayForManager(results);
             startManager();
@@ -178,7 +178,7 @@ function deleteItem() {
     connection.query("DELETE FROM products WHERE ?", {
         ID: answer.deleteID
     }, function(err, res) {
-        console.log(chalk.green.bold('\n  The product was deleted \n');
+        console.log(chalk.green.bold('\n  The product was deleted \n'));
         connection.query('SELECT * FROM products', function(err, res){  
                 displayForManager(res);
                 startManager();

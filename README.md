@@ -17,6 +17,4 @@ To see how the bamazonManager.js application works, please view this video demon
 
 ## Link to Deployed Site
 
-
-
-(http://nehanautiyal.github.io/RPG-Game)
+(https://gloguldager.github.io/bamazon/
