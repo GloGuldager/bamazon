@@ -13,7 +13,11 @@ npm packages Inquirer, Chalk, Cli-Table
 
 To see how the bamazonCustomer.js application works, please view this video demonstration
 
+(https://drive.google.com/file/d/159uKnYpyRalL5Oi2-GjQvdtG-2Nm8-Ki/view?usp=sharing)
+
 To see how the bamazonManager.js application works, please view this video demonstration
+
+(https://drive.google.com/file/d/1JOeYc41nvddDIEDiEH6Nkogy08drNZOb/view?usp=sharing)
 
 ## Link to Deployed Site
 
