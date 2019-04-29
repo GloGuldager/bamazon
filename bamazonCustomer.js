@@ -1,116 +1,202 @@
-// 5. Then create a Node application called `bamazonCustomer.js`. Running this application will first display all of the items available for sale. Include the ids, names, and prices of products for sale.
-
-// 6. The app should then prompt users with two messages.
-
-//    * The first should ask them the ID of the product they would like to buy.
-//    * The second message should ask how many units of the product they would like to buy.
-
-// 7. Once the customer has placed the order, your application should check if your store has enough of the product to meet the customer's request.
-
-//    * If not, the app should log a phrase like `Insufficient quantity!`, and then prevent the order from going through.
-
-// 8. However, if your store _does_ have enough of the product, you should fulfill the customer's order.
-//    * This means updating the SQL database to reflect the remaining quantity.
-//    * Once the update goes through, show the customer the total cost of their purchase.
-
+//Open Bamazon Store ***************************************
+//NPM DEPENDENCIES
 var mysql = require("mysql");
 var inquirer = require("inquirer");
+var Table = require("cli-table");
+var chalk = require("chalk");
+var displayTable = require('./tableConstructor');
 
 // create the connection information for the sql database
 var connection = mysql.createConnection({
-  host: "localhost",
+    host: "localhost",
 
-  // Your port; if not 3306
-  port: 3306,
+    // Your port; if not 3306
+    port: 3306,
 
-  // Your username
-  user: "root",
+    // Your username
+    user: "root",
 
-  // Your password
-  password: "",
-  database: "bamazon_db"
+    // User will need to provide their own MySQL password
+    password: "",
+    database: "bamazon_db"
 });
 
 // connect to the mysql server and sql database
 connection.connect(function (err) {
-  if (err) throw err;
-  // run the start function after the connection is made to prompt the user
-  bamazon();
+    if (err) throw err;
+    // run the start function after the connection is made to prompt the user
+    bamazon();
 });
 
 // first display all of the items available for sale. Include the ids, names, and prices of products for sale.
 
-// function which prompts the user for what action they should take
 function bamazon() {
 
-  inquirer
-    .prompt({
-      name: "welcome",
-      type: "confirm",
-      message: "Welcome to Bamazon! Would you like to look at the items available for sale?",
-      default: true
-    })
-    .then(function (answer) {
-      // based on their answer, either call the bid or the post functions
-      if (answer.welcome === true) {
-        bidAuction();
-      }
-      else {
-        connection.end();
-      }
+    inquirer
+        .prompt({
+            name: "welcome",
+            type: "confirm",
+            message: "\n =================================================== \n         Welcome to Bamazon Grocery & Drug! \n =================================================== \n   \nWould you like to look at the items available for sale? \n",
+            default: true
+        })
+        .then(function (answer) {
+            // based on their answer, display items available to purchase
+            if (answer.welcome === true) {
+                inventory();
+            }
+            else {
+                connection.end();
+                //user chooses not to continue. 
+                console.log(chalk.green.bold("\nOK. Thank you for visiting. Come back anytime. \nJust enter: node bamazonCustomer.js\n"));
+            }
+        });
+}
+//Run Product Inventory to display to User ***************************************
+function inventory() {
+    connection.query("SELECT * FROM products", function (err, res) {
+        displayForManager(res);
+        purchasePrompt();
     });
 }
 
 
-function bidAuction() {
-  // query the database for all items being auctioned
-  connection.query("SELECT * FROM products", function(err, res) {
-    if (err) throw err;
-    // once you have the items, prompt the user for which they'd like to bid on
-    inquirer
-      .prompt([
-        {
-          name: "choice",
-          type: "list",
-          choices: function() {
-            var choiceArray = [];
-            for (var i = 0; i < res.length; i++) {
-              choiceArray.push("Item#" + res[i].id + " " + res[i].productName + " $" + res[i].price);
-            }
-            return choiceArray;
-          },
-          message: "What is the ID# of the product you would like to purchase?"
-        },
-        {
-          name: "purchase",
-          type: "input",
-          message: "How much would you like to bid?"
+//Run Prompt Function to see if user wants to purchase anything ***************************************
+function purchasePrompt() {
+
+    inquirer.prompt([{
+
+        type: "confirm",
+        name: "continue",
+        message: "Would you like to purchase an item?",
+        default: true
+
+    }]).then(function (user) {
+        if (user.continue === true) {
+            purchase();
+        } else {
+            console.log(chalk.green.bold("Thank you! Come back soon! Just enter: node bamazonCustomer.js"));
+            connection.end();
         }
-      ])
-      .then(function(answer) {
-        // get the information of the chosen item
-        var chosenItem;
-        for (var i = 0; i < results.length; i++) {
-          if (results[i].productName === answer.choice) {
-            chosenItem = results[i];
-          }
-        }
-
-
-//         6. The app should then prompt users with two messages.
-
-//    * The first should ask them the ID of the product they would like to buy.
-//    * The second message should ask how many units of the product they would like to buy.
-
-// 7. Once the customer has placed the order, your application should check if your store has enough of the product to meet the customer's request.
-
-//    * If not, the app should log a phrase like `Insufficient quantity!`, and then prevent the order from going through.
-
-// 8. However, if your store _does_ have enough of the product, you should fulfill the customer's order.
-//    * This means updating the SQL database to reflect the remaining quantity.
-//    * Once the update goes through, show the customer the total cost of their purchase.
-
-
-      });
-  });
+    });
 }
+
+// Ask and capture user purchase choice ***************************************
+
+function purchase() {
+
+    inquirer
+        .prompt([
+            {
+                name: "itemID",
+                type: "input",
+                message: "\nGreat! What is the Item # of the product you would like to purchase?\n"
+            },
+            {
+                name: "units",
+                type: "number",
+                message: "\nHow many units of the item would you like to purchase?\n"
+            },
+
+        ])
+        .then(function (selection) {
+            // get the information of the chosen item
+
+            // query the database for all items available to purchase
+            connection.query("SELECT * FROM products WHERE id=?", selection.itemID, function (err, res) {
+
+                for (var i = 0; i < res.length; i++) {
+
+                    if (selection.units > res[i].stockQuantity) {
+
+                        console.log(chalk.green.bold("==================================================="));
+                        console.log(chalk.green.bold("Sorry! Not enough of that item in stock."));
+                        console.log(chalk.green.bold("==================================================="));
+                        newOrder();
+
+                    } else {
+                        //list item information for user for confirm prompt
+                        console.log(chalk.green.bold("==================================================="));
+                        console.log(chalk.green.bold("Awesome! We can fulfull your order."));
+                        console.log(chalk.green.bold("==================================================="));
+                        console.log(chalk.green.bold("You've selected:"));
+                        console.log(chalk.green.bold("----------------"));
+                        console.log(chalk.green.bold("Item: " + res[i].productName));
+                        console.log(chalk.green.bold("Department: " + res[i].departmentName));
+                        console.log(chalk.green.bold("Price: $" + res[i].price));
+                        console.log(chalk.green.bold("Quantity: " + selection.units));
+                        console.log(chalk.green.bold("----------------"));
+                        console.log(chalk.green.bold("Total: $" + res[i].price * selection.units));
+                        console.log(chalk.green.bold("===================================================\n"));
+
+                        var newStock = (res[i].stockQuantity - selection.units);
+                        var purchaseId = (selection.itemID);
+                        //console.log(newStock);
+                        confirmPrompt(newStock, purchaseId);
+                    }
+                }
+            });
+        })
+}
+
+// Confirm purchase and update inventory ***************************************
+
+
+function confirmPrompt(newStock, purchaseId) {
+
+    inquirer.prompt([{
+
+        type: "confirm",
+        name: "confirmPurchase",
+        message: "\nAre you sure you would like to purchase this item and quantity?\n",
+        default: true
+
+    }]).then(function(userConfirm) {
+        if (userConfirm.confirmPurchase === true) {
+
+            //if user confirms purchase, update mysql database with new stock quantity by subtracting user quantity purchased.
+
+            connection.query("UPDATE products SET ? WHERE ?", [{
+                stockQuantity: newStock
+            }, {
+                id: purchaseId
+            }], function(err, res) {});
+
+            console.log(chalk.green.bold("==================================================="));
+            console.log(chalk.green.bold("Your purchase has been completed. Thank you."));
+            console.log(chalk.green.bold("==================================================="));
+            newOrder();
+        } else {
+            console.log(chalk.green.bold("==================================================="));
+            console.log(chalk.green.bold("No worries. Stop back to shop anytime! \NJust enter: node bamazonCustomer.js"));
+            console.log(chalk.green.bold("==================================================="));
+            connection.end();
+        }
+    });
+}
+function newOrder() {
+
+    inquirer
+        .prompt({
+            name: "welcome",
+            type: "confirm",
+            message: "\nWould you like to take another look at the inventory?\n",
+            default: true
+        })
+        .then(function (answer) {
+            // based on their answer, display items available to purchase
+            if (answer.welcome === true) {
+                inventory();
+            }
+            else {
+                connection.end();
+                console.log(chalk.green.bold("\n Come back again another time\n \nJust enter: node bamazonCustomer.js\n"))
+            }
+        });
+}
+//connect to tableConstructor.js to view table of items
+var displayForManager = function (results) {
+    var display = new displayTable();
+    display.displayInventoryTable(results);
+}
+
+
